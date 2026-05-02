@@ -2,8 +2,9 @@ import AppKit
 import SwiftUI
 import Combine
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, MenuBarContentViewDelegate {
     private var statusItem: NSStatusItem!
+    private var menuBarContent: MenuBarContentView!
     private var popover: NSPopover!
     private var eventMonitor: Any?
     private var cancellables = Set<AnyCancellable>()
@@ -17,16 +18,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         notifier.requestAuthorization()
 
-        // Status item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.title = "🍅 Pomodoro"
-            button.target = self
-            button.action = #selector(handleClick(_:))
-            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+            button.title = ""
+            button.image = nil
+            installMenuBarContent(in: button)
         }
 
-        // Popover with SwiftUI root
         popover = NSPopover()
         popover.behavior = .transient
         let host = NSHostingController(
@@ -37,45 +35,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(launchAtLogin)
                 .environmentObject(notifier)
         )
-        // Let SwiftUI's intrinsic size drive the popover from the very first show,
-        // so it doesn't appear detached and then snap to the menu bar.
         host.sizingOptions = [.preferredContentSize]
         popover.contentViewController = host
 
-        // Update menu bar title on every timer change
-        timer.objectWillChange
-            .receive(on: RunLoop.main)
-            .sink { [weak self] in self?.updateStatusTitle() }
-            .store(in: &cancellables)
-
-        // React to duration changes while idle
         settings.objectWillChange
             .receive(on: RunLoop.main)
             .sink { [weak self] in self?.timer.applyDurationsIfIdle() }
             .store(in: &cancellables)
 
-        updateStatusTitle()
+        // Mirror timer state into the AppKit menu bar view.
+        timer.objectWillChange
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.refreshMenuBar() }
+            .store(in: &cancellables)
+        refreshMenuBar()
     }
 
-    private func updateStatusTitle() {
-        guard let button = statusItem.button else { return }
+    private func installMenuBarContent(in button: NSStatusBarButton) {
+        let view = MenuBarContentView()
+        view.delegate = self
+        button.subviews.forEach { $0.removeFromSuperview() }
+        button.addSubview(view)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            view.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            view.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            view.topAnchor.constraint(equalTo: button.topAnchor),
+            view.bottomAnchor.constraint(equalTo: button.bottomAnchor),
+        ])
+        menuBarContent = view
+        syncStatusItemWidth()
+    }
+
+    private func refreshMenuBar() {
+        guard let menuBarContent else { return }
+        let suffix: String
         switch timer.state {
-        case .idle:
-            button.title = "🍅 \(timer.formattedRemaining)"
-        case .running:
-            button.title = "🍅 \(timer.formattedRemaining)"
-        case .paused:
-            button.title = "🍅 ⏸ \(timer.formattedRemaining)"
+        case .paused: suffix = " ⏸"
+        default: suffix = ""
         }
+        menuBarContent.setLabel("🍅 \(timer.formattedRemaining)\(suffix)")
+        menuBarContent.setPauseSymbol(isRunning: timer.state == .running)
     }
 
-    @objc private func handleClick(_ sender: NSStatusBarButton) {
-        guard let event = NSApp.currentEvent else { return }
-        if event.type == .rightMouseUp {
-            showContextMenu()
-        } else {
-            togglePopover()
-        }
+    private func syncStatusItemWidth() {
+        statusItem.length = menuBarContent.intrinsicContentSize.width
     }
 
     private func togglePopover() {
@@ -84,8 +88,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(nil)
             stopMonitor()
         } else {
-            // Refresh transient state that can change while the popover is closed
-            // (user toggling things in System Settings).
             notifier.refreshStatus()
             launchAtLogin.refresh()
             NSApp.activate(ignoringOtherApps: true)
@@ -125,9 +127,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
-        statusItem.menu = nil // detach so left-click goes back to popover
+        statusItem.menu = nil
     }
 
     @objc private func menuToggle() { timer.toggle() }
     @objc private func menuReset() { timer.reset() }
+
+    // MARK: - MenuBarContentViewDelegate
+
+    func menuBarTogglePlay() { timer.toggle() }
+    func menuBarSkip() { timer.skip() }
+    func menuBarReset() { timer.reset() }
+    func menuBarLabelClicked() { togglePopover() }
+    func menuBarRightClicked() { showContextMenu() }
+    func menuBarContentSizeDidChange() { syncStatusItemWidth() }
 }
