@@ -1,8 +1,10 @@
 import SwiftUI
+import UserNotifications
 
 struct SettingsView: View {
     @EnvironmentObject var settings: Settings
     @EnvironmentObject var launchAtLogin: LaunchAtLogin
+    @EnvironmentObject var notifier: Notifier
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -31,10 +33,43 @@ struct SettingsView: View {
                     .font(.system(size: 10))
                     .foregroundColor(.orange)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                if notifier.authorizationStatus == .denied {
+                    HStack(spacing: 6) {
+                        Text("Notifications disabled.")
+                            .font(.system(size: 10))
+                            .foregroundColor(.orange)
+                        Button("Open Settings") {
+                            openNotificationSettings()
+                        }
+                        .font(.system(size: 11))
+                        .buttonStyle(.borderless)
+                    }
+                } else if notifier.authorizationStatus == .notDetermined {
+                    Button("Enable notifications") {
+                        notifier.requestAuthorization()
+                    }
+                    .font(.system(size: 11))
+                    .buttonStyle(.borderless)
+                }
+                HStack {
+                    Spacer()
+                    Button("Test alert") {
+                        notifier.sendTestNotification(playSound: settings.playSound)
+                    }
+                    .font(.system(size: 11))
+                    .buttonStyle(.borderless)
+                }
+            }
+            .padding(.top, 2)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .onAppear { launchAtLogin.refresh() }
+        .onAppear {
+            launchAtLogin.refresh()
+            notifier.refreshStatus()
+        }
     }
 
     @ViewBuilder
@@ -56,6 +91,17 @@ struct SettingsView: View {
             }
             Stepper("", value: value, in: range)
                 .labelsHidden()
+        }
+    }
+
+    private func openNotificationSettings() {
+        // Newer macOS pane id, falls back to the legacy id if the new one isn't found.
+        let urls = [
+            "x-apple.systempreferences:com.apple.Notifications-Settings.extension",
+            "x-apple.systempreferences:com.apple.preference.notifications"
+        ]
+        for s in urls {
+            if let url = URL(string: s), NSWorkspace.shared.open(url) { return }
         }
     }
 

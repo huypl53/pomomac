@@ -1,7 +1,6 @@
 import Foundation
 import ServiceManagement
 
-@MainActor
 final class LaunchAtLogin: ObservableObject {
     static let shared = LaunchAtLogin()
 

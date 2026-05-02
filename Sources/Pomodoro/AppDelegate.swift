@@ -35,6 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(settings)
                 .environmentObject(stats)
                 .environmentObject(launchAtLogin)
+                .environmentObject(notifier)
         )
         // Let SwiftUI's intrinsic size drive the popover from the very first show,
         // so it doesn't appear detached and then snap to the menu bar.
@@ -83,6 +84,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(nil)
             stopMonitor()
         } else {
+            // Refresh transient state that can change while the popover is closed
+            // (user toggling things in System Settings).
+            notifier.refreshStatus()
+            launchAtLogin.refresh()
             NSApp.activate(ignoringOtherApps: true)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             popover.contentViewController?.view.window?.makeKey()
