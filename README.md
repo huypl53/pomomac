@@ -1,5 +1,8 @@
 # Pomodoro
 
+[![CI](https://github.com/huypl53/pomomac/actions/workflows/ci.yml/badge.svg)](https://github.com/huypl53/pomomac/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/huypl53/pomomac?display_name=tag&sort=semver)](https://github.com/huypl53/pomomac/releases/latest)
+
 Lightweight macOS menu bar Pomodoro timer. Native Swift + SwiftUI, no dependencies, ~265KB binary, no dock icon.
 
 ![Menu bar with always-visible countdown](docs/images/menubar.png)
@@ -16,6 +19,10 @@ Lightweight macOS menu bar Pomodoro timer. Native Swift + SwiftUI, no dependenci
 - Auto or manual phase switching
 - Simple stats: today / this week / all time
 - Optional launch-at-login (via `SMAppService`)
+
+## Install (prebuilt)
+
+Grab the latest `Pomodoro-vX.Y.Z.zip` from [Releases](https://github.com/huypl53/pomomac/releases), unzip, and move `Pomodoro.app` to `/Applications`. On first launch right-click → **Open** (ad-hoc signed, not notarized).
 
 ## Requirements
 

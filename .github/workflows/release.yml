@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish .app
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build .app (release)
+        run: ./build.sh release
+
+      - name: Zip .app bundle
+        run: |
+          ditto -c -k --keepParent Pomodoro.app "Pomodoro-${{ github.ref_name }}.zip"
+          shasum -a 256 "Pomodoro-${{ github.ref_name }}.zip" | tee SHA256SUMS
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Pomodoro ${{ github.ref_name }}
+          generate_release_notes: true
+          files: |
+            Pomodoro-${{ github.ref_name }}.zip
+            SHA256SUMS
+          body: |
+            Lightweight macOS menu bar Pomodoro timer.
+
+            ## Install
+            1. Download `Pomodoro-${{ github.ref_name }}.zip`
+            2. Unzip and move `Pomodoro.app` to `/Applications`
+            3. First launch: **right-click → Open** (the app is ad-hoc signed, not notarized — macOS will otherwise refuse)
+            4. Click the 🍅 in the menu bar; toggle "Launch at login" if you want it on startup
+
+            **Requirements:** macOS 13+
