@@ -1,6 +1,25 @@
+# SwiftPM
 .build/
 .swiftpm/
-Pomodoro.app/
+Package.resolved
+
+# Build output
+*.app
+DerivedData/
+
+# Xcode
 *.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# Editors / IDEs
+.vscode/
+.idea/
+
+# macOS
 .DS_Store
+
+# Project-local
 .worktrees/
+*.log
