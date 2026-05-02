@@ -2,6 +2,12 @@
 
 Lightweight macOS menu bar Pomodoro timer. Native Swift + SwiftUI, no dependencies, ~265KB binary, no dock icon.
 
+![Menu bar with always-visible countdown](docs/images/menubar.png)
+
+<p align="center">
+  <img src="docs/images/popover.png" alt="Popover with timer, settings, and stats" width="360">
+</p>
+
 ## Features
 
 - Lives in the menu bar — countdown always visible: `🍅 24:32`
