@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settings = Settings()
     private let stats = Stats()
     private let notifier = Notifier.shared
+    private let launchAtLogin = LaunchAtLogin.shared
     private lazy var timer = PomodoroTimer(settings: settings, stats: stats, notifier: notifier)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -33,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 .environmentObject(timer)
                 .environmentObject(settings)
                 .environmentObject(stats)
+                .environmentObject(launchAtLogin)
         )
         // Let SwiftUI's intrinsic size drive the popover from the very first show,
         // so it doesn't appear detached and then snap to the menu bar.

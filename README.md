@@ -9,6 +9,7 @@ Lightweight macOS menu bar Pomodoro timer. Native Swift + SwiftUI, no dependenci
 - Configurable durations (work / short break / long break) and sessions-until-long-break
 - Auto or manual phase switching
 - Simple stats: today / this week / all time
+- Optional launch-at-login (via `SMAppService`)
 
 ## Requirements
 

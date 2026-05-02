@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settings: Settings
+    @EnvironmentObject var launchAtLogin: LaunchAtLogin
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -19,9 +20,21 @@ struct SettingsView: View {
                 .font(.system(size: 12))
             Toggle("Play sound on alert", isOn: $settings.playSound)
                 .font(.system(size: 12))
+            Toggle("Launch at login", isOn: Binding(
+                get: { launchAtLogin.isEnabled },
+                set: { launchAtLogin.setEnabled($0) }
+            ))
+            .font(.system(size: 12))
+
+            if launchAtLogin.requiresApproval {
+                Text("Approve in System Settings → General → Login Items.")
+                    .font(.system(size: 10))
+                    .foregroundColor(.orange)
+            }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+        .onAppear { launchAtLogin.refresh() }
     }
 
     @ViewBuilder
